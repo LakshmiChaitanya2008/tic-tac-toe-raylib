@@ -17,19 +17,10 @@ pub fn build(b: *std.Build) void {
 
     exe.root_module.addIncludePath(raylib_dep.path("src"));
 
-    if (b.build_root.handle.openDir("src", .{ .iterate = true })) |dir| {
-        var d = dir;
-        defer d.close();
-        var iter = d.iterate();
-        while (iter.next() catch null) |entry| {
-            if (entry.kind == .file and std.mem.endsWith(u8, entry.name, ".c")) {
-                exe.root_module.addCSourceFile(.{
-                    .file = b.path(b.fmt("src/{s}", .{entry.name})),
-                    .flags = &.{ "-std=c99", "-Wall", "-Wextra", "-pedantic" },
-                });
-            }
-        }
-    } else |_| {}
+    exe.root_module.addCSourceFile(.{
+        .file = b.path("src/main.c"),
+        .flags = &.{ "-std=c99", "-Wall", "-Wextra", "-pedantic" },
+    });
 
     exe.root_module.linkLibrary(raylib_dep.artifact("raylib"));
 

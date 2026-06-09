@@ -1,6 +1,6 @@
-# ___________
+# ****\_\_\_****
 
-A simple [raylib](https://www.raylib.com/index.html)-based implementation of ______________.
+A simple [raylib](https://www.raylib.com/index.html)-based implementation of ******\_\_******.
 
 ## Compiling and Running
 

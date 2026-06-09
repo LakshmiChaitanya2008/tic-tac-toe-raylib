@@ -14,7 +14,10 @@ CMakeUserPresets.json
 .cache
 build
 .zig-cache
+zig-pkg
+.vscode
 zig-out
+deps
 
 # CLion
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
