@@ -1,8 +1,13 @@
 #include "stdio.h"
+#include "math.h"
 #include "raylib.h"
 #include "assert.h"
 
 #define NUM_CELLS 9
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define switch_player(c) (c == Cell_O ? Cell_X : Cell_O)
+
 
 typedef enum {
     Scene_Menu,
@@ -23,6 +28,108 @@ typedef enum {
     Cell_X
 } Cell;
 
+static bool game_over(Cell grid[NUM_CELLS], Cell player) {
+    const int w_cases[8][3] = {
+        {0, 4, 8}, {2, 4, 6}, 
+        {0, 1, 2}, {3, 4, 5}, 
+        {6, 7, 8}, {0, 3, 6},
+        {1, 4, 7}, {2, 5, 8}
+    };
+
+    for(int i = 0; i < 8; i++) {
+        if (grid[w_cases[i][0]] == player && grid[w_cases[i][1]] == player && grid[w_cases[i][2]] == player) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool grid_is_full(Cell grid[NUM_CELLS]) {
+    for(int i = 0; i < NUM_CELLS; i++) {
+        if(grid[i] == Cell_Empty) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static int grid_empty_indices(Cell grid[NUM_CELLS], int indices[NUM_CELLS]) {
+    int num_indices = 0;
+    for(int i = 0; i < NUM_CELLS; i++) {
+        if(grid[i] == Cell_Empty) {
+            indices[num_indices] = i;
+            num_indices++;
+        }
+    }
+
+    return num_indices;
+}
+
+static int grid_minimax(Cell grid[NUM_CELLS], Cell player) {
+    Cell opponent = switch_player(player);
+ 
+    if(game_over(grid, opponent)) {
+        return opponent == Cell_O ? 1 : -1;
+    }
+
+    int score; 
+    int indices[NUM_CELLS];
+
+    int num_indices = grid_empty_indices(grid, indices);
+
+    if(num_indices == 0) {
+        return 0;
+    }
+
+    if(player == Cell_O) {
+        score = -100000;
+
+        for(int i = 0; i < num_indices; i++) {
+            grid[indices[i]] = player;
+            score = MAX(score, grid_minimax(grid, switch_player(player)));
+            grid[indices[i]] = Cell_Empty;
+        }
+    } else {
+        score = 100000;
+        for(int i = 0; i < num_indices; i++) {
+            grid[indices[i]] = player;
+            score = MIN(score, grid_minimax(grid, switch_player(player)));
+            grid[indices[i]] = Cell_Empty;
+        }
+    }
+
+    return score;
+}
+
+static void grid_update(Cell grid[NUM_CELLS], Cell player) {
+    int indices[NUM_CELLS];
+    const int num_indices = grid_empty_indices(grid, indices);
+
+    int best_score = -100000;
+    int best_index = 0;
+
+    for(int i = 0; i < num_indices; i++) {
+        grid[indices[i]] = player;
+
+        if(game_over(grid, player)) {
+            return;
+        }
+
+        int score = grid_minimax(grid, switch_player(player));
+
+        if(score > best_score) {
+            best_score = score;
+            best_index = i;
+        }
+
+        grid[indices[i]] = Cell_Empty;
+    }
+
+    grid[indices[best_index]] = player;
+
+}
 static void centered_text_init(Centered_Text *ct, char *text, int font_size, int y, Color color, int screen_width) {
     ct->text = text;
     ct->font_size = font_size;
@@ -88,8 +195,8 @@ int main(void)
     EndTextureMode();
 
 
-    while (!WindowShouldClose())
-    {
+    while (!WindowShouldClose()) {
+        Vector2 mouse_pos = GetMousePosition();
         switch(scene) {
             case Scene_Menu: {
                 Vector2 mouse_pos = GetMousePosition();
@@ -97,14 +204,14 @@ int main(void)
                 if(CheckCollisionPointRec(mouse_pos, menu_start_button)) {
                     if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                         scene = Scene_Game;
-
                         for (int i = 0; i < NUM_CELLS; i++) {
                             grid[i] = Cell_Empty;
                         }
 
-                        grid[0] = Cell_X;
-                        grid[3] = Cell_O;
+                        // grid[0] = Cell_X;
+                        // grid[3] = Cell_O;
                         player_turn = Cell_X;
+                        
                     } else {
                         menu_start_button_color = GREEN;
                     }
@@ -116,8 +223,25 @@ int main(void)
             }
 
             case Scene_Game: {
-                if(IsKeyPressed(KEY_ENTER)) {
-                    scene = Scene_Menu;
+                 if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                    
+                    int x = (int) floorf(mouse_pos.x / (float) square_size);
+                    int y = (int) floorf(mouse_pos.y / (float) square_size);
+                    int i  = y * 3 + x;
+
+                    if(grid[i] == Cell_Empty) {
+                        grid[y * 3 + x] = player_turn;
+
+                        if (game_over(grid, player_turn) || grid_is_full(grid)) {
+                            scene = Scene_Menu;
+                        } else {
+                            grid_update(grid, Cell_O);
+
+                            if(game_over(grid, player_turn) || grid_is_full(grid)) {
+                                scene = Scene_Menu;
+                            }
+                        }
+                    }
                 }
 
                 break;
@@ -142,8 +266,6 @@ int main(void)
 
             case Scene_Game: {
 
-                
-
                 DrawLine(screen_width / 3, 0, screen_width / 3, screen_height, WHITE);
                 DrawLine(2 * screen_width / 3, 0, 2 * screen_width / 3, screen_height, WHITE);
 
@@ -165,6 +287,7 @@ int main(void)
                             DrawTexture(texture_o.texture, x * square_size, y * square_size, WHITE);
                             break;
                         }
+
                         case Cell_X: {
                             printf("X: %d, %d\n", x, y);
                             DrawTexture(texture_x.texture, x * square_size, y * square_size, WHITE);
@@ -172,6 +295,10 @@ int main(void)
 
                             break;
                         }
+
+                        case Cell_Empty:
+                        default: 
+                            break;
                     }
                 }
                 break;
