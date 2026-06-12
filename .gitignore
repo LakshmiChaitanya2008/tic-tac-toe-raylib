@@ -1,22 +1,30 @@
-CMakeLists.txt.user
+# Zig
+.zig-cache/
+zig-out/
+zig-pkg/
+
+# Logs
+*.log
+build.log
+
+# Editors
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# CMake junk
 CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Testing
+CMakeFiles/
+CMakeScripts/
+Testing/
+_deps/
+build/
 Makefile
 cmake_install.cmake
 install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
-_deps
 CMakeUserPresets.json
-
-.cache
-build
-.zig-cache
-zig-pkg
-.vscode
-zig-out
-
-# CLion
-#cmake-build-*
