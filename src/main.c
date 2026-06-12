@@ -1,7 +1,7 @@
-#include "assert.h"
-#include "math.h"
-#include "raylib.h"
-#include "stdio.h"
+#include <assert.h>
+#include <math.h>
+#include <raylib.h>
+#include <stdio.h>
 
 #define NUM_CELLS 9
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
